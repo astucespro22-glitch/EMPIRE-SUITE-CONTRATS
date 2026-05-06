@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMPIRE SUITE CONTRATS — Suite d'Outils IA pour Contrats</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg-main: #f8f9fa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f1f3f5;
+            --border-color: #e9ecef;
+            --text-primary: #1a1d23;
+            --text-secondary: #5a6370;
+            --text-muted: #8b92a1;
+            --blue-main: #3b82f6;
+            --blue-light: rgba(59, 130, 246, 0.1);
+            --blue-border: rgba(59, 130, 246, 0.25);
+            --green-main: #10b981;
+            --green-light: rgba(16, 185, 129, 0.1);
+            --purple-main: #8b5cf6;
+            --purple-light: rgba(139, 92, 246, 0.1);
+            --red-main: #ef4444;
+            --red-light: rgba(239, 68, 68, 0.1);
+            --amber-main: #f59e0b;
+            --amber-light: rgba(245, 158, 11, 0.1);
+            --gradient: linear-gradient(135deg, #3b82f6, #8b5cf6);
+        }
+        body { font-family: 'Syne', sans-serif; background: var(--bg-main); color: var(--text-primary); min-height: 100vh; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-main); }
+        ::-webkit-scrollbar-thumb { background: #d0d5dd; border-radius: 4px; }
+
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 300;
+            background: rgba(255, 255, 255, 0.95);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .api-group {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .api-group label {
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .api-select, .model-select {
+            background: var(--bg-secondary);
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: 'Syne', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 7px 10px;
+            outline: none;
+            transition: 0.2s;
+            cursor: pointer;
+            min-width: 160px;
+        }
+
+        .api-select:focus, .model-select:focus {
+            border-color: var(--blue-main);
+        }
+
+        .api-input {
+            background: var(--bg-secondary);
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            padding: 7px 10px;
+            outline: none;
+            transition: 0.2s;
+            width: 210px;
+        }
+
+        .api-input:focus { border-color: var(--blue-main); }
+
+        .validate-btn {
+            padding: 7px 16px;
+            background: var(--blue-main);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Syne', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .validate-btn:hover { background: #2563eb; }
+
+        .key-status {
+            display: none;
+            align-items: center;
+            gap: 4px;
+            background: var(--green-light);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--green-main);
+            font-size: 9px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 999px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .key-status.show { display: inline-flex; }
+
+        .api-code-highlight {
+            background: var(--blue-light);
+            border: 1px solid var(--blue-border);
+            padding: 8px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--blue-main);
+            font-weight: 600;
+            margin-top: 4px;
+            transition: 0.2s;
+            display: none;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 50%, #ffffff 100%);
+            border-bottom: 1px solid var(--border-color);
+            padding: 40px 24px 32px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+            height: 200px;
+            background: radial-gradient(ellipse, rgba(59, 130, 246, 0.08), transparent 70%);
+            pointer-events: none;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--gradient);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.2);
+        }
+
+        .logo-text h1 {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tagline {
+            font-size: 13px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 8px auto 0;
+            line-height: 1.6;
+        }
+
+        .tabs-nav {
+            display: flex;
+            gap: 2px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            padding: 0 24px;
+            flex-wrap: wrap;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            padding: 14px 18px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: 'Syne', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover { color: var(--text-primary); }
+        .tab-btn.active { color: var(--blue-main); border-bottom-color: var(--blue-main); }
+
+        .main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 24px 18px 120px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stack { display: flex; flex-direction: column; gap: 16px; }
+
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+            transition: 0.2s;
+        }
+
+        .card:hover { box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); }
+
+        .card-title {
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 14px;
+            font-family: 'JetBrains Mono', monospace;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .card-title::before {
+            content: '';
+            width: 3px;
+            height: 12px;
+            background: var(--gradient);
+            border-radius: 2px;
+        }
+
+        .type-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .type-btn {
+            padding: 11px 10px;
+            border: 1.5px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-family: 'Syne', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .type-btn:hover { border-color: var(--blue-main); color: var(--text-primary); }
+        .type-btn.active { border-color: var(--blue-main); background: var(--blue-light); color: var(--blue-main); }
+
+        .type-btn-icon { font-size: 18px; }
+        .type-btn-label { font-size: 10px; line-height: 1.3; }
+
+        .lang-grid { display: flex; flex-wrap: wrap; gap: 7px; }
+
+        .lang-btn {
+            padding: 7px 14px;
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-family: 'Syne', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .lang-btn:hover { border-color: var(--blue-main); color: var(--text-primary); }
+        .lang-btn.active { border-color: var(--blue-main); background: var(--blue-light); color: var(--blue-main); }
+
+        .field { display: flex; flex-direction: column; gap: 5px; }
+
+        .field-label {
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .input, .textarea {
+            width: 100%;
+            border: 1.5px solid var(--border-color);
+            border-radius: 10px;
+            padding: 11px 13px;
+            outline: none;
+            transition: 0.2s;
+            background: var(--bg-secondary);
+            font-size: 13px;
+            color: var(--text-primary);
+            font-family: 'Syne', sans-serif;
+        }
+
+        .input:focus, .textarea:focus {
+            border-color: var(--blue-main);
+            box-shadow: 0 0 0 3px var(--blue-light);
+        }
+
+        .textarea { resize: vertical; min-height: 100px; }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        @media (max-width: 560px) {
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+
+        .badge {
+            font-size: 8px;
+            padding: 2px 7px;
+            border-radius: 999px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            display: inline-block;
+        }
+
+        .badge-required {
+            background: var(--red-light);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--red-main);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Syne', sans-serif;
+            font-size: 14px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            transition: 0.35s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: var(--gradient);
+            color: #fff;
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.2);
+        }
+
+        .btn-primary:hover:not([disabled]) {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 36px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2.5px solid rgba(59, 130, 246, 0.3);
+            border-top-color: var(--blue-main);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .result-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            border-top: 3px solid;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+            animation: slideUp 0.4s ease;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .result-card.blue { border-top-color: var(--blue-main); }
+        .result-card.green { border-top-color: var(--green-main); }
+        .result-card.amber { border-top-color: var(--amber-main); }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-header {
+            padding: 12px 18px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 7px;
+        }
+
+        .result-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+        .pill {
+            padding: 3px 8px;
+            border-radius: 999px;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .pill-blue {
+            background: var(--blue-light);
+            border: 1px solid var(--blue-border);
+            color: var(--blue-main);
+        }
+
+        .pill-green {
+            background: var(--green-light);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--green-main);
+        }
+
+        .result-body { padding: 20px; }
+
+        .prose {
+            line-height: 1.8;
+            color: var(--text-primary);
+        }
+
+        .prose h1, .prose h2, .prose h3 {
+            color: var(--text-primary);
+            margin: 16px 0 8px 0;
+            font-weight: 700;
+        }
+
+        .prose h1 {
+            font-size: 18px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .prose h2 { font-size: 16px; }
+        .prose h3 { font-size: 14px; }
+
+        .prose p { margin: 8px 0; }
+        .prose ul, .prose ol { margin: 12px 0 12px 20px; }
+        .prose li { margin: 6px 0; }
+
+        .action-bar {
+            display: flex;
+            gap: 8px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            flex: 1;
+            min-width: 130px;
+            padding: 10px 12px;
+            border: 1.5px solid var(--blue-main);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--blue-main);
+            font-family: 'Syne', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .action-btn:hover { background: var(--blue-light); }
+        .action-btn.copied {
+            background: var(--green-light);
+            border-color: var(--green-main);
+            color: var(--green-main);
+        }
+
+        .score-display {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .score-number {
+            font-size: 48px;
+            font-weight: 800;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .score-bar {
+            flex: 1;
+            height: 8px;
+            background: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .score-fill {
+            height: 100%;
+            background: var(--gradient);
+            transition: width 0.5s ease;
+        }
+
+        .banner-notification {
+            background: var(--amber-light);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            color: var(--amber-main);
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            border-radius: 10px;
+            border: 2px dashed var(--border-color);
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .file-input-wrapper:hover {
+            border-color: var(--blue-main);
+            background: var(--blue-light);
+        }
+
+        .file-input-wrapper input[type="file"] { display: none; }
+
+        .footer {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            padding: 24px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 11px;
+            margin-top: 40px;
+        }
+
+        .footer-content {
+            max-width: 900px;
+            margin: 0 auto;
+            line-height: 1.8;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: var(--blue-main);
+            text-decoration: none;
+            font-weight: 600;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+
+        .footer-links a:hover { text-decoration: underline; }
+
+        @media (max-width: 768px) {
+            .topbar { padding: 10px 16px; gap: 10px; }
+            .api-input { width: 100%; }
+            .main { padding: 16px 12px 80px; }
+            .type-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+        }
+    </style>
+</head>
+<body>
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <div class="api-group">
+            <label>Fournisseur</label>
+            <select class="api-select" id="providerSelect">
+                <option value="anthropic">Anthropic Claude</option>
+                <option value="gemini">Google Gemini</option>
+            </select>
+        </div>
+
+        <div class="api-group">
+            <label>Modèle</label>
+            <select class="model-select" id="modelSelect"></select>
+            <div class="api-code-highlight" id="apiCodeHighlight">
+                <strong>API:</strong> <span id="apiCodeValue"></span>
+            </div>
+        </div>
+
+        <div class="api-group">
+            <label>Clé API</label>
+            <input type="password" class="api-input" id="apiKey" placeholder="Colle ta clé ici">
+        </div>
+
+        <button class="validate-btn" id="validateKeyBtn">Valider</button>
+        <div class="key-status" id="keyStatus"></div>
+    </div>
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="logo-container">
+            <div class="logo-icon">⚖️</div>
+            <div class="logo-text"><h1>EMPIRE SUITE CONTRATS</h1></div>
+        </div>
+        <div class="tagline">Suite complète d'outils IA pour contrats • Génération • Analyse • Comparaison • Protection</div>
+    </div>
+
+    <!-- TABS NAV -->
+    <div class="tabs-nav">
+        <button class="tab-btn active" data-tab="generator">📝 Générateur</button>
+        <button class="tab-btn" data-tab="analyzer">🔍 Analyse</button>
+        <button class="tab-btn" data-tab="comparator">⚖️ Comparateur</button>
+        <button class="tab-btn" data-tab="simplifier">💡 Simplifier</button>
+        <button class="tab-btn" data-tab="protector">🛡️ Score</button>
+        <button class="tab-btn" data-tab="guide">📖 Guide</button>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main">
+
+        <!-- GENERATOR -->
+        <div class="tab-content active" id="generator">
+            <div class="stack">
+                <div class="card">
+                    <div class="card-title">Type de contrat</div>
+                    <div class="type-grid">
+                        <button class="type-btn active" data-type="Contrat de Service"><span class="type-btn-icon">💼</span><span class="type-btn-label">Service</span></button>
+                        <button class="type-btn" data-type="Contrat de Vente"><span class="type-btn-icon">🛍️</span><span class="type-btn-label">Vente</span></button>
+                        <button class="type-btn" data-type="Contrat de Partenariat"><span class="type-btn-icon">🤝</span><span class="type-btn-label">Partenariat</span></button>
+                        <button class="type-btn" data-type="Contrat de Travail"><span class="type-btn-icon">👔</span><span class="type-btn-label">Travail</span></button>
+                        <button class="type-btn" data-type="Contrat de Location"><span class="type-btn-icon">🏠</span><span class="type-btn-label">Location</span></button>
+                        <button class="type-btn" data-type="Accord de Confidentialité"><span class="type-btn-icon">🤐</span><span class="type-btn-label">Confidentialité</span></button>
+                        <button class="type-btn" data-type="Contrat de Consultation"><span class="type-btn-icon">👨‍💻</span><span class="type-btn-label">Consultation</span></button>
+                        <button class="type-btn" data-type="Contrat d'Approvisionnement"><span class="type-btn-icon">📦</span><span class="type-btn-label">Approvisionnement</span></button>
+                        <button class="type-btn" data-type="Contrat de Franchise"><span class="type-btn-icon">🏢</span><span class="type-btn-label">Franchise</span></button>
+                        <button class="type-btn" data-type="Contrat de Licence"><span class="type-btn-icon">📜</span><span class="type-btn-label">Licence</span></button>
+                    </div>
+                    <div class="field">
+                        <label class="field-label">Ou personnalisé</label>
+                        <input type="text" class="input" id="customType" placeholder="Ex: Contrat d'Influenceur">
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Langue</div>
+                    <div class="lang-grid">
+                        <button class="lang-btn active" data-lang="Français">Français</button>
+                        <button class="lang-btn" data-lang="Anglais">Anglais</button>
+                        <button class="lang-btn" data-lang="Espagnol">Espagnol</button>
+                        <button class="lang-btn" data-lang="Allemand">Allemand</button>
+                        <button class="lang-btn" data-lang="Portugais">Portugais</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Parties du contrat</div>
+                    <div class="grid-2">
+                        <div class="field">
+                            <label class="field-label">Partie A <span class="badge badge-required">Requis</span></label>
+                            <input type="text" class="input" id="partyA" placeholder="Nom ou entreprise">
+                        </div>
+                        <div class="field">
+                            <label class="field-label">Rôle de A</label>
+                            <input type="text" class="input" id="roleA" placeholder="Ex: Prestataire">
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="field">
+                            <label class="field-label">Partie B <span class="badge badge-required">Requis</span></label>
+                            <input type="text" class="input" id="partyB" placeholder="Nom ou entreprise">
+                        </div>
+                        <div class="field">
+                            <label class="field-label">Rôle de B</label>
+                            <input type="text" class="input" id="roleB" placeholder="Ex: Client">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Détails du contrat</div>
+                    <div class="field">
+                        <label class="field-label">Objet du contrat <span class="badge badge-required">Requis</span></label>
+                        <textarea class="textarea" id="objectContract" placeholder="Décris l'objectif principal..."></textarea>
+                    </div>
+                    <div class="grid-2">
+                        <div class="field">
+                            <label class="field-label">Montant / Rémunération</label>
+                            <input type="text" class="input" id="amount" placeholder="Ex: 5000€ HT">
+                        </div>
+                        <div class="field">
+                            <label class="field-label">Durée / Délais</label>
+                            <input type="text" class="input" id="duration" placeholder="Ex: 12 mois">
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="field">
+                            <label class="field-label">Pays / Juridiction</label>
+                            <input type="text" class="input" id="country" placeholder="Ex: France">
+                        </div>
+                        <div class="field">
+                            <label class="field-label">Lieu de signature</label>
+                            <input type="text" class="input" id="city" placeholder="Ex: Paris">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="field-label">Clauses spéciales</label>
+                        <textarea class="textarea" id="specialClauses" placeholder="Ajoute des clauses spécifiques..."></textarea>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" id="generateContractBtn"><span>✨ Générer le contrat complet</span></button>
+                <div id="generatorOutput"></div>
+            </div>
+        </div>
+
+        <!-- ANALYZER -->
+        <div class="tab-content" id="analyzer">
+            <div class="stack">
+                <div class="banner-notification">⚠️ <strong>Important:</strong> Cette analyse est indicative. Consultez un avocat avant signature.</div>
+                <div class="card">
+                    <div class="card-title">Analyse de contrat existant</div>
+                    <div class="field">
+                        <label class="field-label">Importe ton contrat</label>
+                        <div class="file-input-wrapper" id="fileUploadArea">
+                            <label style="cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                                <span style="font-size: 24px;">📄</span>
+                                <span style="font-weight: 600; color: var(--text-primary);">Clique ou glisse ton fichier</span>
+                                <span style="font-size: 11px; color: var(--text-muted);">TXT, PDF ou DOCX</span>
+                                <input type="file" id="contractFileInput" accept=".txt,.pdf,.docx" style="display: none;">
+                            </label>
+                        </div>
+                    </div>
+                    <div class="field" style="margin-top: 12px;">
+                        <label class="field-label">Ou colle directement</label>
+                        <textarea class="textarea" id="contractText" placeholder="Colle le texte du contrat..."></textarea>
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="analyzeContractBtn"><span>🔍 Analyser ce contrat</span></button>
+                <div id="analyzerOutput"></div>
+            </div>
+        </div>
+
+        <!-- COMPARATOR -->
+        <div class="tab-content" id="comparator">
+            <div class="stack">
+                <div class="card">
+                    <div class="card-title">Comparateur de contrats</div>
+                    <div class="grid-2">
+                        <div class="field">
+                            <label class="field-label">Contrat A</label>
+                            <textarea class="textarea" id="contractA" placeholder="Colle le premier contrat..."></textarea>
+                        </div>
+                        <div class="field">
+                            <label class="field-label">Contrat B</label>
+                            <textarea class="textarea" id="contractB" placeholder="Colle le deuxième contrat..."></textarea>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="field-label">Question spécifique</label>
+                        <input type="text" class="input" id="compareQuestion" placeholder="Ex: Lequel protège mieux l'employé?">
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="compareBtn"><span>⚖️ Comparer les contrats</span></button>
+                <div id="comparatorOutput"></div>
+            </div>
+        </div>
+
+        <!-- SIMPLIFIER -->
+        <div class="tab-content" id="simplifier">
+            <div class="stack">
+                <div class="card">
+                    <div class="card-title">Traduction juridique simplifiée</div>
+                    <div class="field">
+                        <label class="field-label">Extrait ou clause du contrat</label>
+                        <textarea class="textarea" id="legalText" placeholder="Colle le texte juridique complexe..."></textarea>
+                    </div>
+                    <div class="field">
+                        <label class="field-label">Type de simplification</label>
+                        <select class="api-select" id="simplifyType" style="width: 100%;">
+                            <option value="simple">Langage très simple (grand public)</option>
+                            <option value="intermediate">Langage intermédiaire (business)</option>
+                            <option value="explained">Explication point par point</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="simplifyBtn"><span>💡 Simplifier le texte</span></button>
+                <div id="simplifierOutput"></div>
+            </div>
+        </div>
+
+        <!-- PROTECTOR -->
+        <div class="tab-content" id="protector">
+            <div class="stack">
+                <div class="banner-notification">🛡️ <strong>Score de Protection:</strong> Note votre contrat de 1/10 à 10/10.</div>
+                <div class="card">
+                    <div class="card-title">Score de protection</div>
+                    <div class="field">
+                        <label class="field-label">Contrat à noter</label>
+                        <textarea class="textarea" id="protectorContract" placeholder="Colle le contrat entier..."></textarea>
+                    </div>
+                    <div class="field">
+                        <label class="field-label">Je suis</label>
+                        <select class="api-select" id="protectorRole" style="width: 100%;">
+                            <option value="employee">Employé</option>
+                            <option value="contractor">Prestataire/Indépendant</option>
+                            <option value="buyer">Acheteur</option>
+                            <option value="seller">Vendeur</option>
+                            <option value="partner">Partenaire</option>
+                            <option value="general">Analyse générale</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="protectorBtn"><span>🛡️ Calculer le score</span></button>
+                <div id="protectorOutput"></div>
+            </div>
+        </div>
+
+        <!-- GUIDE -->
+        <div class="tab-content" id="guide">
+            <div class="stack">
+                <div class="card">
+                    <div class="card-title">Guide d'utilisation</div>
+                    <div style="padding: 20px; background: var(--bg-tertiary); border-radius: 8px; margin-bottom: 12px;">
+                        <h3 style="margin-top: 0; color: var(--blue-main);">📖 Télécharge le guide complet en PDF</h3>
+                        <p style="margin: 12px 0; color: var(--text-secondary); font-size: 13px;">
+                            Un document PDF détaillé expliquant comment utiliser chaque fonctionnalité de l'outil.
+                        </p>
+                        <button style="background: var(--gradient); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-family: 'Syne', sans-serif; font-weight: 700; cursor: pointer; font-size: 12px; text-transform: uppercase;" onclick="downloadGuide(event)">
+                            📥 Télécharger le Guide PDF
+                        </button>
+                    </div>
+                    <h3 style="color: var(--text-primary); margin-top: 20px;">📝 Résumé rapide</h3>
+                    <div style="color: var(--text-secondary); font-size: 13px; line-height: 1.8;">
+                        <p><strong>Onglet Générateur:</strong> Crée des contrats professionnels complets. Choisis le type, la langue, remplis les infos et génère.</p>
+                        <p><strong>Onglet Analyse:</strong> Upload ou colle un contrat existant pour identifier les clauses dangereuses et manquantes.</p>
+                        <p><strong>Onglet Comparateur:</strong> Colle 2 contrats pour les comparer et savoir lequel est plus avantageux.</p>
+                        <p><strong>Onglet Simplificateur:</strong> Transforme le jargon juridique complexe en langage clair et compréhensible.</p>
+                        <p><strong>Onglet Score:</strong> Obtiens une note /10 sur la protection d'un contrat selon ton rôle (employé, prestataire, etc.).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a onclick="downloadGuide(event)">📥 Télécharger le Guide (PDF)</a>
+            </div>
+            <p>© 2025-2026 <strong>ASTUCES DES PRO</strong> — <strong>EVA V.13 ULTRA</strong> — <strong>EMPIRE SUITE CONTRATS</strong></p>
+            <p>Outil propriétaire de génération et d'analyse de contrats IA — Tous droits réservés.</p>
+            <p style="font-size: 10px; margin-top: 8px; color: #999;">
+                ⚠️ Cet outil génère des contrats informatifs. Consultez toujours un professionnel juridique avant signature officielle.
+            </p>
+        </div>
+    </div>
+
+    <!-- SCRIPT -->
+    <script>
+        const API_KEY_STORAGE = 'empire-contrats-api-key';
+        const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
+        const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
+
+        const MODELS_CONFIG = {
+            anthropic: [
+                { name: 'Claude Opus 4.5', value: 'claude-opus-4-20250514' },
+                { name: 'Claude Sonnet 4.5', value: 'claude-sonnet-4-20250514' },
+                { name: 'Claude Haiku 4.5', value: 'claude-haiku-4-5-20251001' }
+            ],
+            gemini: [
+                { name: 'Gemini 2.0 Flash', value: 'gemini-2.0-flash' },
+                { name: 'Gemini 1.5 Pro', value: 'gemini-1.5-pro' },
+                { name: 'Gemini 1.5 Flash', value: 'gemini-1.5-flash' }
+            ]
+        };
+
+        let selectedType = 'Contrat de Service';
+        let selectedLang = 'Français';
+
+        document.addEventListener('DOMContentLoaded', init);
+
+        function init() {
+            console.log('✅ Initialisation...');
+            
+            // Modèles
+            document.getElementById('providerSelect').addEventListener('change', updateModels);
+            updateModels();
+
+            // Clé API
+            document.getElementById('validateKeyBtn').addEventListener('click', validateKey);
+            document.getElementById('apiKey').addEventListener('keydown', e => e.key === 'Enter' && validateKey());
+            loadApiKey();
+
+            // Onglets
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.getElementById(btn.dataset.tab).classList.add('active');
+                });
+            });
+
+            // Types
+            document.querySelectorAll('.type-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    selectedType = btn.dataset.type;
+                    document.getElementById('customType').value = '';
+                });
+            });
+
+            // Langues
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    selectedLang = btn.dataset.lang;
+                });
+            });
+
+            // Boutons
+            document.getElementById('generateContractBtn').addEventListener('click', generateContract);
+            document.getElementById('analyzeContractBtn').addEventListener('click', analyzeContract);
+            document.getElementById('compareBtn').addEventListener('click', compareContracts);
+            document.getElementById('simplifyBtn').addEventListener('click', simplifyLegal);
+            document.getElementById('protectorBtn').addEventListener('click', calculateProtectionScore);
+
+            // Upload fichier
+            const fileUpload = document.getElementById('fileUploadArea');
+            const fileInput = document.getElementById('contractFileInput');
+            fileUpload.addEventListener('click', () => fileInput.click());
+            fileUpload.addEventListener('dragover', e => {
+                e.preventDefault();
+                fileUpload.style.borderColor = '#3b82f6';
+                fileUpload.style.background = 'rgba(59, 130, 246, 0.1)';
+            });
+            fileUpload.addEventListener('dragleave', () => {
+                fileUpload.style.borderColor = '#e9ecef';
+                fileUpload.style.background = 'transparent';
+            });
+            fileUpload.addEventListener('drop', e => {
+                e.preventDefault();
+                fileUpload.style.borderColor = '#e9ecef';
+                fileUpload.style.background = 'transparent';
+                if (e.dataTransfer.files.length > 0) {
+                    const reader = new FileReader();
+                    reader.onload = () => document.getElementById('contractText').value = reader.result;
+                    reader.readAsText(e.dataTransfer.files[0]);
+                }
+            });
+            fileInput.addEventListener('change', e => {
+                if (e.target.files.length > 0) {
+                    const reader = new FileReader();
+                    reader.onload = () => document.getElementById('contractText').value = reader.result;
+                    reader.readAsText(e.target.files[0]);
+                }
+            });
+
+            console.log('✅ Tous les écouteurs configurés');
+        }
+
+        function updateModels() {
+            const provider = document.getElementById('providerSelect').value;
+            const modelSelect = document.getElementById('modelSelect');
+            const models = MODELS_CONFIG[provider];
+
+            modelSelect.innerHTML = '';
+            models.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.value;
+                opt.textContent = m.name;
+                modelSelect.appendChild(opt);
+            });
+
+            updateApiCode();
+            modelSelect.addEventListener('change', updateApiCode);
+        }
+
+        function updateApiCode() {
+            const provider = document.getElementById('providerSelect').value;
+            const model = document.getElementById('modelSelect').value;
+            document.getElementById('apiCodeHighlight').style.display = 'block';
+            document.getElementById('apiCodeValue').textContent = `${provider}: "${model}"`;
+        }
+
+        function loadApiKey() {
+            const key = localStorage.getItem(API_KEY_STORAGE);
+            if (key && key.length > 8) {
+                document.getElementById('apiKey').value = key;
+                showKeyStatus();
+            }
+        }
+
+        function validateKey() {
+            const key = document.getElementById('apiKey').value.trim();
+            if (!key) {
+                alert('⚠️ Saisis ta clé API');
+                return;
+            }
+            localStorage.setItem(API_KEY_STORAGE, key);
+            showKeyStatus();
+        }
+
+        function showKeyStatus() {
+            const status = document.getElementById('keyStatus');
+            status.style.display = 'inline-flex';
+            status.textContent = '✓ Clé sauvegardée';
+            document.getElementById('validateKeyBtn').style.background = '#10b981';
+        }
+
+        async function callAI(prompt) {
+            const key = document.getElementById('apiKey').value.trim() || localStorage.getItem(API_KEY_STORAGE);
+            const provider = document.getElementById('providerSelect').value;
+            const model = document.getElementById('modelSelect').value;
+
+            if (!key) {
+                alert('⚠️ Clé API manquante');
+                throw new Error('No API key');
+            }
+
+            const response = await fetch(provider === 'anthropic' ? ANTHROPIC_API_URL : `${GEMINI_BASE_URL}/${model}:generateContent?key=${key}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(provider === 'anthropic' && { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' })
+                },
+                body: JSON.stringify(provider === 'anthropic' ?
+                    { model, max_tokens: 4000, messages: [{ role: 'user', content: prompt }] } :
+                    { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.4, maxOutputTokens: 4000 } }
+                )
+            });
+
+            if (!response.ok) throw new Error(`Erreur ${response.status}`);
+
+            const data = await response.json();
+            return provider === 'anthropic' ?
+                data.content.find(c => c.type === 'text')?.text || '' :
+                data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        }
+
+        async function generateContract() {
+            const partyA = document.getElementById('partyA').value.trim();
+            const partyB = document.getElementById('partyB').value.trim();
+            const object = document.getElementById('objectContract').value.trim();
+
+            if (!partyA || !partyB || !object) {
+                alert('⚠️ Remplis : Partie A, Partie B et Objet');
+                return;
+            }
+
+            const btn = document.getElementById('generateContractBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div> Génération...';
+
+            try {
+                const result = await callAI(`Tu es un juriste expert. Rédige un contrat : ${selectedType}\n\nPARTIES :\n- A : ${partyA} (${document.getElementById('roleA').value.trim() || 'rôle'})\n- B : ${partyB} (${document.getElementById('roleB').value.trim() || 'rôle'})\n\nOBJET :\n${object}\n\nLANGUE : ${selectedLang}\n\nInstructions : Articles numérotés, préambule, définitions, obligations, résiliation, signatures. À la fin : NOTE — Généré par IA. Consultez un avocat.`);
+                showResult('generatorOutput', result, selectedType, 'blue');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '✨ Générer le contrat complet';
+            }
+        }
+
+        async function analyzeContract() {
+            const text = document.getElementById('contractText').value.trim();
+            if (!text) {
+                alert('⚠️ Colle un contrat');
+                return;
+            }
+
+            const btn = document.getElementById('analyzeContractBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div> Analyse...';
+
+            try {
+                const result = await callAI(`Analyse ce contrat :\n\n${text}\n\nIdentifie :\n1. Clauses dangereuses\n2. Clauses manquantes\n3. Points forts\n4. Recommandations`);
+                showResult('analyzerOutput', result, 'Analyse', 'green');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '🔍 Analyser ce contrat';
+            }
+        }
+
+        async function compareContracts() {
+            const a = document.getElementById('contractA').value.trim();
+            const b = document.getElementById('contractB').value.trim();
+            if (!a || !b) {
+                alert('⚠️ Colle 2 contrats');
+                return;
+            }
+
+            const btn = document.getElementById('compareBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div> Comparaison...';
+
+            try {
+                const result = await callAI(`Compare ces 2 contrats :\n\nA :\n${a}\n\nB :\n${b}\n\nDifférences, lequel choisir, risques.`);
+                showResult('comparatorOutput', result, 'Comparaison', 'blue');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '⚖️ Comparer les contrats';
+            }
+        }
+
+        async function simplifyLegal() {
+            const text = document.getElementById('legalText').value.trim();
+            if (!text) {
+                alert('⚠️ Colle un texte');
+                return;
+            }
+
+            const btn = document.getElementById('simplifyBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div> Simplification...';
+
+            try {
+                const type = document.getElementById('simplifyType').value;
+                const style = type === 'simple' ? 'langage enfant 12 ans' : type === 'intermediate' ? 'langage business' : 'point par point';
+                const result = await callAI(`Simplifie ce texte en ${style} :\n\n${text}`);
+                showResult('simplifierOutput', result, 'Simplifié', 'blue');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '💡 Simplifier le texte';
+            }
+        }
+
+        async function calculateProtectionScore() {
+            const text = document.getElementById('protectorContract').value.trim();
+            if (!text) {
+                alert('⚠️ Colle un contrat');
+                return;
+            }
+
+            const btn = document.getElementById('protectorBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div> Évaluation...';
+
+            try {
+                const result = await callAI(`Note ce contrat /10 :\n\n${text}\n\nScore, pourquoi, forces, faiblesses, top 5 améliorations.`);
+                const score = parseInt(result.match(/\d+/)?.[0]) || 5;
+                const output = document.getElementById('protectorOutput');
+                output.innerHTML = `<div class="result-card amber"><div class="result-header"><div class="result-meta"><span class="pill pill-amber">Score</span></div></div><div class="result-body"><div class="score-display"><div class="score-number">${score}</div><div style="flex:1"><div class="score-bar"><div class="score-fill" style="width:${score*10}%"></div></div></div></div><div class="prose">${marked.parse(result)}</div></div></div>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '🛡️ Calculer le score';
+            }
+        }
+
+        function showResult(id, content, title, color) {
+            document.getElementById(id).innerHTML = `<div class="result-card ${color}"><div class="result-header"><span class="pill pill-${color}">${title}</span></div><div class="result-body"><div class="prose">${marked.parse(content)}</div></div></div>`;
+        }
+
+        function downloadGuide(e) {
+            if (e) e.preventDefault();
+            
+            // PDF en base64 intégré
+            const pdfBase64 = 'JVBERi0xLjQKJZOMi54gUmVwb3J0TGFiIEdlbmVyYXRlZCBQREYgZG9jdW1lbnQgKG9wZW5zb3VyY2UpCjEgMCBvYmoKPDwKL0YxIDIgMCBSIC9GMiAzIDAgUiAvRjMgNCAwIFIgL0Y0IDUgMCBSIC9GNSA4IDAgUgo+PgplbmRvYmoKMiAwIG9iago8PAovQmFzZUZvbnQgL0hlbHZldGljYSAvRW5jb2RpbmcgL1dpbkFuc2lFbmNvZGluZyAvTmFtZSAvRjEgL1N1YnR5cGUgL1R5cGUxIC9UeXBlIC9Gb250Cj4+CmVuZG9iagozIDAgb2JqCjw8Ci9CYXNlRm9udCAvSGVsdmV0aWNhLUJvbGQgL0VuY29kaW5nIC9XaW5BbnNpRW5jb2RpbmcgL05hbWUgL0YyIC9TdWJ0eXBlIC9UeXBlMSAvVHlwZSAvRm9udAo+PgplbmRvYmoKNCAwIG9iago8PAovQmFzZUZvbnQgL1phcGZEaW5nYmF0cyAvTmFtZSAvRjMgL1N1YnR5cGUgL1R5cGUxIC9UeXBlIC9Gb250Cj4+CmVuZG9iago1IDAgb2JqCjw8Ci9CYXNlRm9udCAvSGVsdmV0aWNhLUJvbGRPYmxpcXVlIC9FbmNvZGluZyAvV2luQW5zaUVuY29kaW5nIC9OYW1lIC9GNCAvU3VidHlwZSAvVHlwZTEgL1R5cGUgL0ZvbnQKPj4KZW5kb2JqCjYgMCBvYmoKPDwKL0NvbnRlbnRzIDE3IDAgUiAvTWVkaWFCb3ggWyAwIDAgNTk1LjI3NTYgODQxLjg4OTggXSAvUGFyZW50IDE2IDAgUiAvUmVzb3VyY2VzIDw8Ci9Gb250IDEgMCBSIC9Qcm9jU2V0IFsgL1BERiAvVGV4dCAvSW1hZ2VCIC9JbWFnZUMgL0ltYWdlSSBdCj4+IC9Sb3RhdGUgMCAvVHJhbnMgPDwKCj4+IAogIC9UeXBlIC9QYWdlCj4+CmVuZG9iago3IDAgb2JqCjw8Ci9Db250ZW50cyAxOCAwIFIgL01lZGlhQm94IFsgMCAwIDU5NS4yNzU2IDg0MS44ODk4IF0gL1BhcmVudCAxNiAwIFIgL1Jlc291cmNlcyA8PAovRm9udCAxIDAgUiAvUHJvY1NldCBbIC9QREYgL1RleHQgL0ltYWdlQiAvSW1hZ2VDIC9JbWFnZUkgXQo+PiAvUm90YXRlIDAgL1RyYW5zIDw8Cgo+PiAKICAvVHlwZSAvUGFnZQo+PgplbmRvYmoKOCAwIG9iago8PAovQmFzZUZvbnQgL0hlbHZldGljYS1PYmxpcXVlIC9FbmNvZGluZyAvV2luQW5zaUVuY29kaW5nIC9OYW1lIC9GNSAvU3VidHlwZSAvVHlwZTEgL1R5cGUgL0ZvbnQKPj4KZW5kb2JqCjkgMCBvYmoKPDwKL0NvbnRlbnRzIDE5IDAgUiAvTWVkaWFCb3ggWyAwIDAgNTk1LjI3NTYgODQxLjg4OTggXSAvUGFyZW50IDE2IDAgUiAvUmVzb3VyY2VzIDw8Ci9Gb250IDEgMCBSIC9Qcm9jU2V0IFsgL1BERiAvVGV4dCAvSW1hZ2VCIC9JbWFnZUMgL0ltYWdlSSBdCj4+IC9Sb3RhdGUgMCAvVHJhbnMgPDwKCj4+IAogIC9UeXBlIC9QYWdlCj4+CmVuZG9iagoxMCAwIG9iago8PAovQ29udGVudHMgMjAgMCBSIC9NZWRpYUJveCBbIDAgMCA1OTUuMjc1NiA4NDEuODg5OCBdIC9QYXJlbnQgMTYgMCBSIC9SZXNvdXJjZXMgPDwKL0ZvbnQgMSAwIFIgL1Byb2NTZXQgWyAvUERGIC9UZXh0IC9JbWFnZUIgL0ltYWdlQyAvSW1hZ2VJIF0KPj4gL1JvdGF0ZSAwIC9UcmFucyA8PAoKPj4gCiAgL1R5cGUgL1BhZ2UKPj4KZW5kb2JqCjExIDAgb2JqCjw8Ci9Db250ZW50cyAyMSAwIFIgL01lZGlhQm94IFsgMCAwIDU5NS4yNzU2IDg0MS44ODk4IF0gL1BhcmVudCAxNiAwIFIgL1Jlc291cmNlcyA8PAovRm9udCAxIDAgUiAvUHJvY1NldCBbIC9QREYgL1RleHQgL0ltYWdlQiAvSW1hZ2VDIC9JbWFnZUkgXQo+PiAvUm90YXRlIDAgL1RyYW5zIDw8Cgo+PiAKICAvVHlwZSAvUGFnZQo+PgplbmRvYmoKMTIgMCBvYmoKPDwKL0NvbnRlbnRzIDIyIDAgUiAvTWVkaWFCb3ggWyAwIDAgNTk1LjI3NTYgODQxLjg4OTggXSAvUGFyZW50IDE2IDAgUiAvUmVzb3VyY2VzIDw8Ci9Gb250IDEgMCBSIC9Qcm9jU2V0IFsgL1BERiAvVGV4dCAvSW1hZ2VCIC9JbWFnZUMgL0ltYWdlSSBdCj4+IC9Sb3RhdGUgMCAvVHJhbnMgPDwKCj4+IAogIC9UeXBlIC9QYWdlCj4+CmVuZG9iagoxMyAwIG9iago8PAovQ29udGVudHMgMjMgMCBSIC9NZWRpYUJveCBbIDAgMCA1OTUuMjc1NiA4NDEuODg5OCBdIC9QYXJlbnQgMTYgMCBSIC9SZXNvdXJjZXMgPDwKL0ZvbnQgMSAwIFIgL1Byb2NTZXQgWyAvUERGIC9UZXh0IC9JbWFnZUIgL0ltYWdlQyAvSW1hZ2VJIF0KPj4gL1JvdGF0ZSAwIC9UcmFucyA8PAoKPj4gCiAgL1R5cGUgL1BhZ2UKPj4KZW5kb2JqCjE0IDAgb2JqCjw8Ci9QYWdlTW9kZSAvVXNlTm9uZSAvUGFnZXMgMTYgMCBSIC9UeXBlIC9DYXRhbG9nCj4+CmVuZG9iagoxNSAwIG9iago8PAovQXV0aG9yIChcKGFub255bW91c1wpKSAvQ3JlYXRpb25EYXRlIChEOjIwMjYwNTA1MjAwOTQ5KzAwJzAwJykgL0NyZWF0b3IgKFwodW5zcGVjaWZpZWRcKSkgL0tleXdvcmRzICgpIC9Nb2REYXRlIChEOjIwMjYwNTA1MjAwOTQ5KzAwJzAwJykgL1Byb2R1Y2VyIChSZXBvcnRMYWIgUERGIExpYnJhcnkgLSBcKG9wZW5zb3VyY2VcKSkgCiAgL1N1YmplY3QgKFwodW5zcGVjaWZpZWRcKSkgL1RpdGxlIChcKGFub255bW91c1wpKSAvVHJhcHBlZCAvRmFsc2UKPj4KZW5kb2JqCjE2IDAgb2JqCjw8Ci9Db3VudCA3IC9LaWRzIFsgNiAwIFIgNyAwIFIgOSAwIFIgMTAgMCBSIDExIDAgUiAxMiAwIFIgMTMgMCBSIF0gL1R5cGUgL1BhZ2VzCj4+CmVuZG9iagoxNyAwIG9iago8PAovRmlsdGVyIFsgL0FTQ0lJODVEZWNvZGUgL0ZsYXRlRGVjb2RlIF0gL0xlbmd0aCA1MDkKPj4Kc3RyZWFtCkdhdFZaPnUvPGsnRipMbXJKR1taMW5qUTNHMjc9dTMiOl1PWkhhdDxMZE5zIzlfUkg2W2s0ZmlKbU9nbS0/JE5mb0pBcW5rITQtPz1UTWNDa2hkUixKVVJjZTlTMSE2NyFmamBHOWIhMjwvYEFjaWxLQDVTclAhMEdMPUU/LFonLXE9TVdzUTk0NSNmK11oTFJIKTstcls8aThRYXFRMXFhOy0sLkFNSzQ0K1MuL3AzXUYjdDhIJjVYJyhsJ149byZKT0xHS0Q+bCVgMUUtSTQ1b1lgJkxtIjsqRXVfayJcQCpbW1hyIWJqUkAjbjRrOEg5MEVQPkQsRWVOJzFuO2A5PVFnI1pWW1g0UlJmMitgMmU5Z0tgQExabjdeTSUqUjJBRVtDaipoWGNZRmdEJWdMN0tgRTZnV0czOFZPQkk6P0AnYTAjXlAiQGplIkhBRGs5ckg+TkJVRUQzOCR1QWlONEJEaS9TS1BxSk5fLzBhNj4vNCtkUmRmQks/IVN0MnA/W3VBJlNkWVBoVThmZEYiXzo5VCVrIlJhSWpQYHVfV2M8bDJeYFRDXkIxNkJsM3BLYyhdQ1YkSGZDQFhjUjslNFElUFlbJXRkaG9fXidwVEYlck5BUWs+JUZiSTMvPC5aOjBZYiVzI2ZNc0FiU08xPStyIVBLUT1JL34+ZW5kc3RyZWFtCmVuZG9iagoxOCAwIG9iago8PAovRmlsdGVyIFsgL0FTQ0lJODVEZWNvZGUgL0ZsYXRlRGVjb2RlIF0gL0xlbmd0aCA2MDIKPj4Kc3RyZWFtCkdhdD1nOW9rYnQmO0taT01FLDlxbjFrMWUzMlRQT0Q3KkI1L2s3TzNlcXBAIzg7c090Sik6OE44Q0UyRGFOMFxHUltIXCtHbkY6ImZac0E2aSshMVY+Nk8hdSpycGBPNmk3QGJAZCErOWpebyhQTEZgay9PVCRBUlRvNSUkQCMvLikiZy0jbl5gNEFQTDQnKzFSOFwmNy4sM1pnJ0RjXzdoPFw0XiIycXRSXFtJKWxyUUkrMmwzYjZUUmpPX0dOTlYhSW5WNzxmOClrQF8iTytWR2hGbF1KU0s1MFNtVjBAcFE6Y242LjlbLWpuNU5MZ149SVkjUUdtQmBjNUBfR21nZGRZcjEoVSMvLlVwTDJRP2QjUmFlMmFkby5NSSUlLW9NTTNOV0xPMlBQdFhaMHFIX0luMCcvPU1FX0ZEVy9aNEZpRSo6OitgLU4wbDJSUE9CZzpjckJiJkdNUjFZLi9mYFg/KVsqY2VgMHJEMVduM3JxKTRoIyMmLC1Na2peUUJJU3IsdENDXl00cnRoN0w5OSssK09MVk9MQVdRU0trLDBhblYjK3JFOUdvbDg2byptQEFXRzVnJkFCLlVLQV5kRCsrZiZfP1EuYU8scCkmYVEuNj4zSygjU0RxSF5RO2AlZD5KJk1FXUhhQypoOVkrVmVhMTAqaD1FQ0VsP3A3OnNNIiM4cEI/XGpEUkxgI0puPyQvUWlldEQyMChSRFJvZVRTVyEqW1sic0dLXihPRzg4Ujp0Pz5tQVZoU21eZkFqRVJpVGk9T2YqIlpGSm5vaDgvbXBkQ2tjNj4+ZW5kc3RyZWFtCmVuZG9iagoxOSAwIG9iago8PAovRmlsdGVyIFsgL0FTQ0lJODVEZWNvZGUgL0ZsYXRlRGVjb2RlIF0gL0xlbmd0aCAxMDc2Cj4+CnN0cmVhbQpHYXVISmgvQ2FyJjphLlVFQk1YQmFpKyFpX1Y2SUA8VDdNbW5DQUQ+P0FnMk9tZC5Hc3I6UVNERC05TEo1WStpLWZYYTBBSWVPaW0mTyFkUmYrI09dJD06SS5eZ2o9b15mLU9jb2NERFphbjo+RTkkUmU/RUUzY2I1cHFLKUdmN2RxIjYyTTNgPlBkZGFoVmRARjtxdHI1Wl1qY0dtbGgoL2hiKWw7Z25ldSdwNF0uWklaTVciKiVILGVzX2wtPkE4REdsOiZNX1JAXGhjSC01XF5OLytLVj9zUVImTmM+PV9cSGc8KTpOWTt0OUBRJlEqYXBBJUtDXVRpTV9GNzRxL29RKl91LyEobEg8PVRxLnBhRj5kRXVdV2dvVEpyV3M+LkBJWktfRkgzN3JSUi1US1ZLNlJpcGY4alU4aUVYJkFXaCZjJDRILnBpWEYlV0QlWEVNRSpmc1lbOyEoLDZtQz8nTk9RK3VuaUZFN2cvQVBkVyNIT3I1dUo3J1llQEBzJDVzU3RqJnFLa1NiQjBDU1xiaVhtPlJmLSdKQGNvIyt0a2NTYWQyW1xcWG4nXDFETUxDQGxVKjVzY2w+Tk1oOjBhNHRkKE5KRTg8ZG9FO20kRSRETSVTa0dMXFghTG5eXW4oOCY2Um5BIT03SSFTS2teOGprKlwqbnVRQkwsQjY8W2YiWWVCSE5LRElLaUFcZSxBN2RSOkwwYyZOQyZKY3FkTVd0N0VMMENyI0opLEc9XCZeWV5PJkZLUV5GNnFoWzFhVGEzYU5vXEdUTFU4P0tfKjFPZiNOYjomVDVtIyo+aF45SFgqQXEpSzw6a0NdOEY5VydBKyVGXExfQi1TNDBtUFRINV8hdHAhclQiKzVSLFpacmc3RFdTZSswXVZDYTwjOjI2TkhgQys9bm5Ub05UQnNqRFFLNipSOidUOiFnQVNMOGNiIWRDUTMpS0RUVmFxITVcTWZHbSM3YEhLSF1KU0lsR2VJNCkvc1paVEw5ZEc7UU9xLUprKXU0ZjA6Kl1Xc0A0ZiNCVGtrXHFqN0xBSzheW3JOZTprKWYjXGw4SS9DNjleQF9TZV9KW2RcRjdLcTdxPE5Rc1xGYWljMUdQKUc5T2pUcTZdTG1hMGhjOS0xb2lcZWFrK19XOyhUUEVaVko0azRAUWZhK3VKKTBKMzE0az5BOixeRjNoLT4hIVxQLVFqKEJLY0k/a3BuJjBKNDQwPT9SV1xeQ2QuMFNHLi1RPDxebmVTZ0UuWjNiNzZZREJYWXBoPDc6N0NqcDJuWj0yQCRWckMjOlxJTChwP2RVOG1wZCNEZkYoU08lMEFEWV9wP0FXUUtXR1coMUtqanNxaz5kRkkpSDMwbXIiVTVvRjp0T1gtbzVRRFdfJj46KWJoNUFVcU1mc0kvcT5sVSxqOUQwX2tsbnIvPGN+PmVuZHN0cmVhbQplbmRvYmoKMjAgMCBvYmoKPDwKL0ZpbHRlciBbIC9BU0NJSTg1RGVjb2RlIC9GbGF0ZURlY29kZSBdIC9MZW5ndGggOTQ2Cj4+CnN0cmVhbQpHYXQ9aTlsbGRYJjtLWlEnbWhiJFptdChpXFlZbENidEwyai1UITInJDQnazxPREZyNy1ibUFHTjU2akclaUszIT80KFYmbV0vMksoR0ZMdW8qWERLJEQyNWI6XzF0ZUJLdVZpXlZQJVJnV2pJczFKW0YsOFdrVjtvS1dNUC9tVWpaI2MzIjpMJXI0OTlmbk1kSEllN0w5KSk/I3luVlR0LVQ4P2w+c1M1b0xdLTdBVj5CYChGQkU5WE1IK0ZvLElFJWEsb1hURm1qPXFTL0VtXFhOYlA4PTZwOXFlJ1RBcFZiaj5nO0NrJzZ0XTo8c19SODdQNzJCOCJfX0spYkkvSVkvWzJuQ2s9ZTI7LlInX0FyO1pYQ0w/KD5iTmdkMzlLJmdMRDlDPjlLUjVSLkRHUm9QXWY/USohRi9tZlQocSJgKVtJOmlNTTtoKTdUS0tZMnErX0FELjEwY1wyJEdNXlcxQz1Zam02azJsM2c0SyhtSTw1Xjlxb1wpJmxQOGplUTwtRDBXPDlzPlojKVE6YWdLSmpIJnNJXFEzXkNYKUNmJCdJY3NDTy9PV2IkNCNNZ3NQQjJTPmllNVlsTSR1byc0IktaK0tjX24makxIInJpV2BRaWh0TnBaYVxaQW9vSG1eM210bE5XMGIjX19eOTY9bl0nXW4tQSMxZSozT18rRzdjViJeK2wlImkpP0xPPGsnOFtEOEdvbDAxJkZYJU8/JidZXHVNLic0LzFDcyhbUC5YOCVcRyskdDltV0QxclxNYGsjVEdCMDs7Vz9OM2NTcHJeUERHKE8vVDdcRDJPMkNKaUVHaHBqU21lMiEiQjRsREQ6W2ovSjJqMl9XaDBRJShGblxPKCY6NTRORSI+RFtrLEkqQTAnXm1xI0FaRltRcHRcRkYvZktdNHBnK0k3MWJOV0dPIV5LXWpCSFdEO1wiPyIyOiIqSUJGWFpjOWQzbVAuNUVzcTIlPictO2s5aCg8LlJCRnNIbTVYckM0PnBXajpNZlFnWj4rV21wckwkY01mJT5QaUpPREBqM2FVLV8mUyJNYDwrJDBwQyhVaj50NXVzTmo4QVk8R1BRYHRVKCQ4PkYqayExQy0lR085KSYsY3BbVDJMKzxjKTUuQW5POmdwdWloKHA4Zyd0NTtBIjAwYUg5W15lWStLYTVhS0VxUFNnSiVZKDR0SWI9KGsnVzBsP18nLEdHZ25BP0krMjEoZEY8RktFcGtNbVllIWo7RUIpX25jTEBvKn4+ZW5kc3RyZWFtCmVuZG9iagoyMSAwIG9iago8PAovRmlsdGVyIFsgL0FTQ0lJODVEZWNvZGUgL0ZsYXRlRGVjb2RlIF0gL0xlbmd0aCAxMzUxCj4+CnN0cmVhbQpHYXRuJTk2NmpmJjpqNkYnbikiSGpeSmNTajFRYkFSQjo7JUMsLWFzUzokR2ItOyJUJDhCQUY9cFktPjVfJmhYWS08Iz9uQyh1QD1xRVo3QiYrVFpnJTwvWSw6TD1CaCNhVURQOFReYVklUilPIVNoRVdhazpGWSwkMWBKOGl0RWdIODRfa1xKVWlpLCg4Wjd0TEQ0aVFKXC4nQyRaTzktMmlpSyJJZTI/MzRjLUBNcTFRcl1pTmVeSHFVK14iPEU9XlpuQWQiUk0wKzY5W2BpSmc3RjtNWmc5ISU8LHI7YyVaOjFKVylfSFBcPGRfZzJUZDxoU0FBJzswVSxecWRTZSFDcjFNOTw2OlpiTjNiNUhzUUVsclo9TSxRPSkrJ2xdbnE5a29jLHJeZ0hIbkZqY3BZSVVQaGBIQW9WUk8zR1lUZ0NrSHRUYlA6W2I5I1JBPzsjW1RjaktcdHJZUihPKW1QL1FdNmk2PVZzZWErTShGXVFJUU1sVDxpZ1ZyXCYiMTAxYzdhMChuJFgiPzk/K0JhXGJHS1g+TVEsT3QsXWNxWyFTTGlEcjghNnEhTl5SImMlcW10QkE1Jkw8OEomcjZnITtkazpwakJvOCxrLl4taj4hMTBQSmtpO1cwWVhaRWVfVD1rcz86MVhNZFozP0FiU0VOLk1iWEQlRUEkQjdLIltHcl5jLzpiQFVnWm5zbk9eLks1QzRwOihsVTg/LS1lS1ZEcmJPOCdYS1FZb3EsTkwrKz9EJD1aTlJyLiNhZ2ouXkw0LDFCUWK1PkJkPU1sKm5dSHVmTGxGMC1wZipzWlQ/KDxxJlRSJjtGP0tGWTBEUUUwPydJTDFlTGVrPjNhJU5tZGdCOmtaaTRWUWQsdUErNUpBSygsLWU5WQBPQU0wMkE5YWI6ZEcaL1MhTzxrWyUwTEdlXFo4aTQkXWVDTTlEP2wsUi47ckkoXi0+Wiw6cTRNazdvJWNkckczLWQ4Sj1Ra1NodDJOSHBJLTgsbFItYn4+ZW5kc3RyZWFtCmVuZG9iagoyMiAwIG9iago8PAovRmlsdGVyIFsgL0FTQ0lJODVEZWNvZGUgL0ZsYXRlRGVjb2RlIF0gL0xlbmd0aCA5NzIKPj4Kc3RyZWFtCkdhdG06Xy9jIyEmQUBya3AvXCo/Ol5bOi4rNTA6TDhYbCwpOWlAImNhPDR0PSs/OidGMUIlJ1BBQjJdLStPKTBhJTJ1QHFeNCNtJSJiQDdsYDguYSxpKi1QXGNOaygoZEtQYEokUiEtNWRyXU9uK0llWVYoazlKXmohO1cnZCw6I3U4S24zVythISgrcHA/KG5GPjpTZWFPVUIwPWxKTCxPTjs4W2dUPzgkJll1bHE6JXRRXmdycGlrTFFlZVQ4ZkJDQ0w2PExjUkYuK2BWUTxwO2dhaFZaTXRcLW5JRVlSSDcyc0dVVkM3SjZWWWJlY0E6RE05YStFPyo9PWJcQGtsUVVnLStlKFRrVCdxKk1oVTpZSlNmcDQqJUQ/PnJgcWQsJyxORSxlJT8wOShORmQ/Vko3RWVoWCVRTllxW0AtOyJNX3I2ZEYnNUs8IT5yOG9uTThuVlohWWJuYFI6by5LTDIlQlsiSENycGVoLzxKPyRRLXRKPTkzQCFkQyFoOCJBLFRiYDQ1PS1zPyppXy1EK2xrVzlaYGFIVkQlQzhSIT5CZF1NbCpuXWh1ZkxsRjAtcGYqc1pTPyg8cSZUUiY7Rj9LRlkwRFFFMD8nSUwxZUxlaz4zYSVObWRnQjprWmkkVlFkLHVBKzVKQUsoLC11bjBDaC5ZYU8jLzlkcyRZLyljNC5vIygnOVohVTU3KkVWKVRQJDFFV19kKmFAbGhAWjRIWUAhZ2NOKkU2NXJHLl9GX2pAKVdROCssIWxJS1pwOClGKTIlJT5bVTc5UDEhZ1tVI1tnW1tpMENHUSs4ZXRdZzJoXjAjYE1DXD4+UW9ucFQkb0Yqcm4lNm01RltOSTUxVyRCKiY4RzUpV09MNV1VbUJrZ01aTzkjdT9fPU0mZUE3cDREJSY/IWk4cUQ7ajpwQzojSSJJNF4tUiU3PzBJSVxMSFZiUmFQXmQoXlY9UyNeSzZZbkJUS0ppWVsuP25ZWiwwLDM8L3NZNFlYUChTQC0zXy42TUQtMiJFRSZoJkdZWWFpUVhiYzlAaS9ESV1YTGpaWExnQT1uNSYuTm8xPEM3ZDRDPUI+XGstJj5iYVU3Nic8PC1MTWVaQyRiK0ZULG1VMk1iVHM2KEdxZzs/K2M/VldOK1BGVDQ/bXI8bE5eRmg9MUltPTZLTXJlKC8wTFRkZV5tVTNKJkMtVmcyM2o7c05YO1dEYmJIJ3RacHBzKEI1ImtvQzYkRGUpN09uL2g9W19RcCI3I2E3aSkzZ2ouZlVINVVSS2NWXjMmKCs4JGFyRk1+PmVuZHN0cmVhbQplbmRvYmoKMjMgMCBvYmoKPDwKL0ZpbHRlciBbIC9BU0NJSTg1RGVjb2RlIC9GbGF0ZURlY29kZSBdIC9MZW5ndGggOTIyCj4+CnN0cmVhbQpHYXRuJDlsSyNGJjtLWlpPTVJmIVhEO0VqaCYnPSdSKlYlT0VxRnM1dGNgPERFIzUqKExdKlYhWUFTMzJFNWomWFBxOzZ0R1pDSUhKXWUha2AycD9aI21uQVQyY2JKTVA7ZVRGbSMnUyVwSDw0bmlXcjEpXSMqUC8vN11pIXFSVClVTD08NVVbJ1RgcHI6OCo6MTdsaEl1Y2trXTJVLCk6NW06NTRHX1lEU20iInFvNCM5RCJENEQrIXRhJzhsO1YqMyNIUlhLZTghLVY1bVsxaG5AI29HXidbWjdqTXRvSVBzVmJlKzYpI1UiO2wySy9zREVvZFlSaVo+OFlXQlRnLy5AcjpUdCNSO2pkOSwmYj0jLyg6Jj5taCoxU3VcXU4pTGFTK2hZXFBDYEhWWiheWDFtallTKCElRz5MbjFKTU1MWltuKiJnSjAiS2glI0RUO1ljNF4tV1RRbTpQTUJTMztWJyllTy81XlA/UGcrSDxJLC8tJGBoNDBRNiE/TTokIyFYUSk4Wl1VYjMpQk1cO0VnNVlJYSNQPVRcXiYvb2E6YFE/TUxeL1QhOFBIWT1mISZkOFdnUGc8XDlyJWtzQCE3aWNLaW9XRUpbby0qPE5iQmpCXTdHOi9rZl9XPGA4ODQzSzMhWzZwV2JORj5UTmhHVWhNWmxXLStzaCRFcTkzJWxiOmRHUEVwJWRfcFNOITtiT29KVl10SUlVS2wkLSloW29ccylRZWpkQkRrJSNvdFVNZUI4Qks/N1k5anJGSTssbUIsbkJOc0drMmBAVlwoKnElSjo/OVEpUyVKazFlbzQjNDM+Qj1oVGotZVZNKV0nUyxeX2goTCFxVUtjTjlZOz5JZUdPOi1iWkF1NTNeU1ptUi1sdGhlV2tBWz84ZDNTRUY4Ric2M1pFZ0MvUC9pTy5tYEU+QEpGSUdUUGQ4bTQpOCYtSih0cklYXnUqaTFJMkUicjZbNk90WzFlU0A4c0JDNjZUZWVvNlhVYXMuZ20zL2AqM1lmPW5bKSdSX11HXisvXGU6P24/bFZIakZkVVBpLVBFOW8lISpoW2VjMyNcSy5YQ01yQWFHQSwnMDI3UCNwKV5ZSVtXbC9WM2lTJUdyOTtla0RNKUYyOUQvJ1MhTzxrWyUwTEdlXFo4aTQkXWVDTTlEP2wsUi47ckkoXi0+Wiw6cTRNazdvJWNkckczLWQ4Sj1Ra1NodDJOSHBJLTgsbFItYn4+ZW5kc3RyZWFtCmVuZG9iagp4cmVmCjAgMjQKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDYxIDAwMDAwIG4gCjAwMDAwMDAxMzIgMDAwMDAgbiAKMDAwMDAwMDIzOSAwMDAwMCBuIAowMDAwMDAwMzUxIDAwMDAwIG4gCjAwMDAwMDA0MzQgMDAwMDAgbiAKMDAwMDAwMDU1MyAwMDAwMCBuIAowMDAwMDAwNzU4IDAwMDAwIG4gCjAwMDAwMDA5NjMgMDAwMDAgbiAKMDAwMDAwMTA3OCAwMDAwMCBuIAowMDAwMDAxMjgzIDAwMDAwIG4gCjAwMDAwMDE0ODkgMDAwMDAgbiAKMDAwMDAwMTY5NSAwMDAwMCBuIAowMDAwMDAxOTAxIDAwMDAwIG4gCjAwMDAwMDIxMDcgMDAwMDAgbiAKMDAwMDAwMjE3NyAwMDAwMCBuIAowMDAwMDAyNDU4IDAwMDAwIG4gCjAwMDAwMDI1NTggMDAwMDAgbiAKMDAwMDAwMzE1OCAwMDAwMCBuIAowMDAwMDAzODUxIDAwMDAwIG4gCjAwMDAwMDUwMTkgMDAwMDAgbiAKMDAwMDAwNjA1NiAwMDAwMCBuIAowMDAwMDA3NDk5IDAwMDAwIG4gCjAwMDAwMDg1NjIgMDAwMDAgbiAKdHJhaWxlcgo8PAovSUQgCls8YmY1NTc2NDk1Y2U2ZjU4NGVkYzQxOTdmOTE1MjVkNjM+PGJmNTU3NjQ5NWNlNmY1ODRlZGM0MTk3ZjkxNTI1ZDYzPl0KJSBSZXBvcnRMYWIgZ2VuZXJhdGVkIFBERiBkb2N1bWVudCAtLSBkaWdlc3QgKG9wZW5zb3VyY2UpCgovSW5mbyAxNSAwIFIKL1Jvb3QgMTQgMCBSCi9TaXplIDI0Cj4+CnN0YXJ0eHJlZgo5NTc1CiUlRU9GCg==';
+            
+            // Décoder et créer un blob
+            const binaryString = atob(pdfBase64);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            const blob = new Blob([bytes], { type: 'application/pdf' });
+            
+            // Créer l'URL et télécharger
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'Empire_Suite_Contrats_Guide.pdf';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Libérer la mémoire
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+        }
+    </script>
+</body>
+</html>
